@@ -7,6 +7,7 @@ import torch.optim as optim
 # import albumentations as albu
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 class MakeDataset(Dataset):
     def __init__(self, img_dir, msk_dir, transform):
@@ -41,7 +42,7 @@ class MakeDataset(Dataset):
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
-        super.__init__()
+        super().__init__()
 
         self.convblock = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size = 3, padding = "same"),
@@ -98,7 +99,7 @@ class Unet(nn.Module):
         self.conv = nn.Conv2d(64, out_channels, kernel_size = 1, padding = "same")
         self.pool = nn.MaxPool2d(kernel_size = 2)
 
-    def fowward(self, x):
+    def forward(self, x):
         x1 = self.CB1(x)
         x2 = self.pool(x1)
 
@@ -148,7 +149,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size = BATCH_SIZE, num_workers = 2, shuffle = True)
     test_loader = DataLoader(test_dataset, batch_size = BATCH_SIZE, num_workers = 2, shuffle = False)
 
-    model = Unet()
+    model = Unet(1, 1)
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -162,7 +163,7 @@ if __name__ == "__main__":
         model.train()
         train_loss = 0
 
-        for (inputs, labels) in train_loader:
+        for (inputs, labels) in tqdm(train_loader):
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -183,6 +184,6 @@ if __name__ == "__main__":
                 train_loss += loss.item()
             test_loss /= len(test_loader)
 
-    train_losses.append(train_loss)
-    test_losses.append(test_loss)
-    print(f'Epoch {epoch + 1} :: train loss {train_loss:.4f}, val loss {test_loss:.4f}')
+        train_losses.append(train_loss)
+        test_losses.append(test_loss)
+        print(f'Epoch {epoch + 1} :: train loss {train_loss:.4f}, val loss {test_loss:.4f}')
