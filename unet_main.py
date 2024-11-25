@@ -4,11 +4,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import torch.optim as optim
-# import albumentations as albu
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-from torchsummary import summary
 import torch.nn.functional as F
 
 class MakeDataset(Dataset):
@@ -48,8 +45,10 @@ class ConvBlock(nn.Module):
 
         self.convblock = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size = 3, padding = "same"),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(),
             nn.Conv2d(out_channels, out_channels, kernel_size = 3, padding = "same"),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU()
         )
 
@@ -65,6 +64,7 @@ class UpConvBlock(nn.Module):
         self.upconvblock = nn.Sequential(
             nn.Upsample(scale_factor = 2),
             nn.Conv2d(in_channels, out_channels, kernel_size = 3, padding = "same"),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU()
         )
     
@@ -158,13 +158,13 @@ if __name__ == "__main__":
 
     train_losses = []
     test_losses = []
-    EPOCHS = 10
+    EPOCHS = 200
 
     for epoch in range(EPOCHS):
         model.train()
         train_loss = 0
 
-        for (inputs, labels) in tqdm(train_loader):
+        for (inputs, labels) in train_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
@@ -188,3 +188,20 @@ if __name__ == "__main__":
         train_losses.append(train_loss)
         test_losses.append(test_loss)
         print(f'Epoch {epoch + 1} :: train loss {train_loss:.6f}, val loss {test_loss:.6f}')
+
+    # 結果を格納するディレクトリの作成
+    result_savedir = dir_fullpath + '/result'
+    if os.path.exists(result_savedir):
+        pass
+    else:
+        os.mkdir(result_savedir)
+    
+    # 結果の描画
+    plt.plot(range(EPOCHS), train_losses, c = 'orange', label = 'train loss')
+    plt.plot(range(EPOCHS), test_losses, c = 'blue', label = 'test loss')
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.grid()
+    plt.legend()
+    plt.title('loss')
+    plt.savefig(result_savedir + '/loss.png')
