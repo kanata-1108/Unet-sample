@@ -12,4 +12,4 @@ unzip Segmentation01.zip
 `setting_data.py`で入力データを整えたのちに`unet_main.py`を実行すれば動作する。
 
 ### result
-[6](https://github.com/user-attachments/assets/3b129de1-d050-4125-b8a7-0397f7336463)
+![](https://github.com/user-attachments/assets/3b129de1-d050-4125-b8a7-0397f7336463)
