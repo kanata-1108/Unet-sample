@@ -7,6 +7,7 @@ import torch.optim as optim
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
+import numpy as np
 
 class MakeDataset(Dataset):
     def __init__(self, img_dir, msk_dir, transform):
@@ -95,6 +96,7 @@ class Unet(nn.Module):
         self.CB9 = ConvBlock(128, 64)
 
         # other parts
+        self.dropout = nn.Dropout()
         self.conv = nn.Conv2d(64, out_channels, kernel_size = 1, padding = "same")
         self.pool = nn.MaxPool2d(kernel_size = 2)
 
@@ -112,6 +114,7 @@ class Unet(nn.Module):
         x5 = self.pool(x4)
 
         x5 = self.CB5(x5)
+        x5 = self.dropout(x5)
 
         z1 = self.UCB1(x5)
         z1 = torch.cat((x4, z1), dim = 1)
@@ -205,3 +208,28 @@ if __name__ == "__main__":
     plt.legend()
     plt.title('loss')
     plt.savefig(result_savedir + '/loss.png')
+
+    # Dataloaderから１バッチ取り出す
+    x_batch, y_batch = next(iter(test_loader))
+
+    # 推論
+    model.eval()
+    preds = model(x_batch.to(device))
+    preds = preds.to('cpu').detach().numpy()
+
+    img = np.ones((256, 256 * 3))
+
+    img_savedir = result_savedir + '/pred_img'
+    if os.path.exists(img_savedir):
+        pass
+    else:
+        os.mkdir(img_savedir)
+
+    for index, i in enumerate(range(BATCH_SIZE)):
+        img[:, :256] = x_batch[i, 0, :, :].numpy()
+        img[:, 256 :256 * 2] = y_batch[i, 0, :, :].numpy()
+        img[:, 256 * 2 :] = preds[i, 0, :, :]
+        plt.figure(figsize = (9, 3))
+        plt.imshow(img, cmap = 'gray')
+        plt.savefig(img_savedir + '/' + str(index) + '.png')
+        
