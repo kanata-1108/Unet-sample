@@ -8,6 +8,7 @@ import torch.optim as optim
 from albumentations.pytorch import ToTensorV2
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from torchsummary import summary
 
 class MakeDataset(Dataset):
     def __init__(self, img_dir, msk_dir, transform):
@@ -65,7 +66,7 @@ class UpConvBlock(nn.Module):
         self.upconvblock = nn.Sequential(
             nn.Upsample(scale_factor = 2, mode = "bilinear", align_corners = True),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, out_channels, kernel_size = 2, padding = "same"),
+            nn.Conv2d(in_channels, out_channels, kernel_size = 3, padding = "same"),
             nn.BatchNorm2d(out_channels)
         )
     
@@ -159,31 +160,33 @@ if __name__ == "__main__":
     test_losses = []
     EPOCHS = 100
 
-    for epoch in range(EPOCHS):
-        model.train()
-        train_loss = 0
+    summary(model, (1, 256, 256))
 
-        for (inputs, labels) in tqdm(train_loader):
-            inputs, labels = inputs.to(device), labels.to(device)
-            optimizer.zero_grad()
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            train_loss += loss.item()
-        train_loss /= len(train_loader)
+    # for epoch in range(EPOCHS):
+    #     model.train()
+    #     train_loss = 0
 
-        model.eval()
-        test_loss = 0
+    #     for (inputs, labels) in tqdm(train_loader):
+    #         inputs, labels = inputs.to(device), labels.to(device)
+    #         optimizer.zero_grad()
+    #         outputs = model(inputs)
+    #         loss = criterion(outputs, labels)
+    #         loss.backward()
+    #         optimizer.step()
+    #         train_loss += loss.item()
+    #     train_loss /= len(train_loader)
 
-        with torch.no_grad():
-            for (inputs, labels) in test_loader:
-                inputs, labels = inputs.to(device), labels.to(device)
-                outputs = model(inputs)
-                loss = criterion(outputs, labels)
-                train_loss += loss.item()
-            test_loss /= len(test_loader)
+    #     model.eval()
+    #     test_loss = 0
 
-        train_losses.append(train_loss)
-        test_losses.append(test_loss)
-        print(f'Epoch {epoch + 1} :: train loss {train_loss:.4f}, val loss {test_loss:.4f}')
+    #     with torch.no_grad():
+    #         for (inputs, labels) in test_loader:
+    #             inputs, labels = inputs.to(device), labels.to(device)
+    #             outputs = model(inputs)
+    #             loss = criterion(outputs, labels)
+    #             train_loss += loss.item()
+    #         test_loss /= len(test_loader)
+
+    #     train_losses.append(train_loss)
+    #     test_losses.append(test_loss)
+    #     print(f'Epoch {epoch + 1} :: train loss {train_loss:.4f}, val loss {test_loss:.4f}')
