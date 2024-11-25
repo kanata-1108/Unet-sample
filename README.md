@@ -12,4 +12,7 @@ unzip Segmentation01.zip
 `setting_data.py`で入力データを整えたのちに`unet_main.py`を実行すれば動作する。
 
 ### result
+入力画像(左)
+正解マスク画像(中央)
+出力マスク画像(右)
 ![](https://github.com/user-attachments/assets/3b129de1-d050-4125-b8a7-0397f7336463)
